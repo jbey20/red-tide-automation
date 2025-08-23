@@ -1,0 +1,28 @@
+{
+  "sarasota": {
+    "post_id": 1593,
+    "beaches": {
+      "beach_1_name": "Siesta Key Beach",
+      "beach_1_fwc_locations": ["Siesta Beach", "Turtle Beach"],
+      "beach_2_name": "Lido Beach", 
+      "beach_2_fwc_locations": ["North Lido Beach", "Lido Beach Casino", "South Lido Park"],
+      "beach_3_name": "Longboat Key",
+      "beach_3_fwc_locations": ["Longboat Key Beach", "Longboat Pass Boat Ramp (Sarasota Bay)", "Longboat Key; 18.2 mi W of", "Longboat Key; 11.7 mi W of", "Longboat Key Beach Access"],
+      "beach_4_name": "Anna Maria",
+      "beach_4_fwc_locations": ["Anna Maria Island Rod & Reel Pier (Lower Tampa Bay)", "Holmes Beach; 12.8 mi W of", "Bradenton Beach", "Cortez Beach", "Coquina Beach"],
+    }
+  },
+  "tampa bay": {
+    "post_id": 1752,
+    "beaches": {
+      "beach_1_name": "Clearwater Beach",
+      "beach_1_fwc_locations": ["Clearwater Pass", "Clearwater Beach Pier 60", "Sand Key Beach"],
+      "beach_2_name": "St. Pete Beach",
+      "beach_2_fwc_locations": ["St. Pete Beach; 8.5 mi W of", "St Pete Beach, 8.5 mi W of"],
+      "beach_3_name": "Indian Shores Beach",
+      "beach_3_fwc_locations": ["Indian Shores Beach", "Indian Shores; 7 mi W of"],
+      "beach_4_name": "Madiera Beach",
+      "beach_4_fwc_locations": ["Madeira Beach; 120 mi W of", "Madeira Beach, 17 mi W of"]
+    }
+  }
+}
