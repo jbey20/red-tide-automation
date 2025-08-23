@@ -255,6 +255,19 @@ class RedTideProcessor:
         """Main processing function"""
         print("Starting red tide processing...")
         
+        # Test WordPress authentication
+        test_url = f"{self.wp_site_url}/wp-json/wp/v2/users/me"
+        auth = (self.wp_username, self.wp_password)
+        test_response = requests.get(test_url, auth=auth)
+        
+        print(f"Auth test: {test_response.status_code}")
+        if test_response.status_code != 200:
+            print(f"Auth failed: {test_response.text}")
+            return
+        else:
+            print(f"Authenticated as: {test_response.json().get('name')}")
+
+
         # Fetch FWC data
         fwc_data = self.fetch_fwc_data()
         print(f"Fetched {len(fwc_data['features'])} samples")
