@@ -194,6 +194,26 @@ class RedTideProcessor:
                             data.get('last_updated', '')
                         ]
                         status_worksheet.append_row(row)
+
+               # Save daily trends
+            trends_worksheet = sheet.worksheet('daily_trends')
+            today = datetime.now().strftime('%Y-%m-%d')
+            
+            for page_key, data in processed_data.items():
+                for i in range(1, 5):
+                    beach_name = data.get(f'beach_{i}_name', '')
+                    if beach_name:
+                        row = [
+                            today,
+                            page_key, 
+                            beach_name,
+                            data.get(f'beach_{i}_count', 0),
+                            data.get(f'beach_{i}_status', ''),
+                            '',  # sample_location
+                            '',  # latitude  
+                            ''   # longitude
+                        ]
+                        trends_worksheet.append_row(row)
             
             # Save raw FWC data
             raw_worksheet = sheet.worksheet('raw_data')
