@@ -255,11 +255,10 @@ class RedTideProcessor:
         """Main processing function"""
         print("Starting red tide processing...")
         
-        # Debug secrets (REMOVE AFTER TESTING)
-        print(f"WP URL: {self.wp_site_url}")
-        print(f"WP User: {self.wp_username}")
-        print(f"WP Pass length: {len(self.wp_password)}")
-        print(f"WP Pass first 5 chars: {self.wp_password[:5]}")
+        # Debug actual received values
+        print(f"Username: '{self.wp_username}'")
+        print(f"Password: '{self.wp_password}'")
+        print(f"Password repr: {repr(self.wp_password)}")
 
         # Test WordPress authentication
         test_url = f"{self.wp_site_url}/wp-json/wp/v2/users/me"
