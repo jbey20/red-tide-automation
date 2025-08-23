@@ -9,10 +9,10 @@
       "beach_3_name": "Longboat Key",
       "beach_3_fwc_locations": ["Longboat Key Beach", "Longboat Pass Boat Ramp (Sarasota Bay)", "Longboat Key; 18.2 mi W of", "Longboat Key; 11.7 mi W of", "Longboat Key Beach Access"],
       "beach_4_name": "Anna Maria",
-      "beach_4_fwc_locations": ["Anna Maria Island Rod & Reel Pier (Lower Tampa Bay)", "Holmes Beach; 12.8 mi W of", "Bradenton Beach", "Cortez Beach", "Coquina Beach"],
+      "beach_4_fwc_locations": ["Anna Maria Island Rod & Reel Pier (Lower Tampa Bay)", "Holmes Beach; 12.8 mi W of", "Bradenton Beach", "Cortez Beach", "Coquina Beach"]
     }
   },
-  "tampa bay": {
+  "tampa_bay": {
     "post_id": 1752,
     "beaches": {
       "beach_1_name": "Clearwater Beach",
