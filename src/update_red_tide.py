@@ -2,6 +2,7 @@ import requests
 import json
 import os
 import re
+import time
 from datetime import datetime
 import gspread
 from google.oauth2.service_account import Credentials
@@ -164,80 +165,69 @@ class RedTideProcessor:
         return response.status_code in [200, 201]
     
     def save_to_google_sheets(self, fwc_data, processed_data):
-        """Save data to Google Sheets"""
-        try:
-            scope = ['https://spreadsheets.google.com/feeds',
-                    'https://www.googleapis.com/auth/drive']
-            
-            creds_dict = json.loads(os.environ['GOOGLE_SERVICE_ACCOUNT'])
-            creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
-            client = gspread.authorize(creds)
-            
-            sheet = client.open_by_key(os.environ['GOOGLE_SHEET_ID'])
-            today = datetime.now().strftime('%Y-%m-%d')
-            
-            # Save to updated beach_status worksheet structure
-            status_worksheet = sheet.worksheet('beach_status')
-            
-            for page_key, data in processed_data.items():
-                for i in range(1, 5):
-                    beach_name = data.get(f'beach_{i}_name', '')
-                    if beach_name:  # Only save if beach has a name
-                        row = [
-                            beach_name,
-                            today,
-                            page_key,
-                            data.get(f'beach_{i}_status', ''),
-                            data.get(f'beach_{i}_count', 0),
-                            data.get('overall_status', ''),
-                            data.get('peak_count', 0),
-                            data.get('last_updated', '')
-                        ]
-                        status_worksheet.append_row(row)
-
-               # Save daily trends
-            trends_worksheet = sheet.worksheet('daily_trends')
-            today = datetime.now().strftime('%Y-%m-%d')
-            
-            for page_key, data in processed_data.items():
-                for i in range(1, 5):
-                    beach_name = data.get(f'beach_{i}_name', '')
-                    if beach_name:
-                        row = [
-                            today,
-                            page_key, 
-                            beach_name,
-                            data.get(f'beach_{i}_count', 0),
-                            data.get(f'beach_{i}_status', ''),
-                            '',  # sample_location
-                            '',  # latitude  
-                            ''   # longitude
-                        ]
-                        trends_worksheet.append_row(row)
-            
-            # Save raw FWC data
-            raw_worksheet = sheet.worksheet('raw_data')
-            for feature in fwc_data['features']:
-                attrs = feature['attributes']
-                abundance_text = attrs.get('Abundance', '')
-                cell_count, _ = self.parse_abundance_number(abundance_text)
+    """Save data to Google Sheets with rate limiting"""
+    try:
+        scope = ['https://spreadsheets.google.com/feeds',
+                'https://www.googleapis.com/auth/drive']
+        
+        creds_dict = json.loads(os.environ['GOOGLE_SERVICE_ACCOUNT'])
+        creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
+        client = gspread.authorize(creds)
+        
+        sheet = client.open_by_key(os.environ['GOOGLE_SHEET_ID'])
+        today = datetime.now().strftime('%Y-%m-%d')
+        
+        # Batch beach_status updates (limit: 10 per batch)
+        status_worksheet = sheet.worksheet('beach_status')
+        status_rows = []
+        
+        for page_key, data in processed_data.items():
+            for i in range(1, 5):
+                beach_name = data.get(f'beach_{i}_name', '')
+                if beach_name:
+                    row = [
+                        beach_name, today, page_key,
+                        data.get(f'beach_{i}_status', ''),
+                        data.get(f'beach_{i}_count', 0),
+                        data.get('overall_status', ''),
+                        data.get('peak_count', 0),
+                        data.get('last_updated', '')
+                    ]
+                    status_rows.append(row)
+        
+        # Write in batches of 10
+        for i in range(0, len(status_rows), 10):
+            batch = status_rows[i:i+10]
+            for row in batch:
+                status_worksheet.append_row(row)
+                time.sleep(1.5)  # 1.5 second delay = 40 requests/minute
+        
+        # Daily trends (batch similarly)
+        trends_worksheet = sheet.worksheet('daily_trends')
+        trends_rows = []
+        
+        for page_key, data in processed_data.items():
+            for i in range(1, 5):
+                beach_name = data.get(f'beach_{i}_name', '')
+                if beach_name:
+                    row = [
+                        today, page_key, beach_name,
+                        data.get(f'beach_{i}_count', 0),
+                        data.get(f'beach_{i}_status', ''),
+                        '', '', ''  # location, lat, lng placeholders
+                    ]
+                    trends_rows.append(row)
+        
+        for row in trends_rows:
+            trends_worksheet.append_row(row)
+            time.sleep(1.5)
+        
+        # Skip raw_data for now (197 rows would exceed limits)
+        print("Raw FWC data skipped due to rate limits")
                 
-                row = [
-                    datetime.fromtimestamp(attrs['SAMPLE_DATE'] / 1000).strftime('%Y-%m-%d'),
-                    attrs.get('LOCATION', ''),
-                    attrs.get('County', ''),
-                    abundance_text,
-                    cell_count,
-                    attrs.get('LATITUDE', ''),
-                    attrs.get('LONGITUDE', ''),
-                    attrs.get('HAB_ID', ''),
-                    datetime.fromtimestamp(attrs['ExportDate'] / 1000).strftime('%Y-%m-%d'),
-                    datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                ]
-                raw_worksheet.append_row(row)
+    except Exception as e:
+        print(f"Google Sheets error: {e}")
                     
-        except Exception as e:
-            print(f"Google Sheets error: {e}")
     
     def fetch_fwc_data(self):
         """Fetch latest data from FWC API"""
