@@ -136,7 +136,7 @@ class RedTideProcessor:
     
     def update_wordpress_page(self, page_config, beach_data):
         """Update WordPress with status and count data"""
-        wp_api_url = f"{self.wp_site_url}/wp-json/wp/v2/beach_city/{page_config['post_id']}"
+        wp_api_url = f"{self.wp_site_url}/wp-json/wp/v2/beach-city/{page_config['post_id']}"
         
         acf_data = {
             'beach_1_status': beach_data['beach_1_status'],
