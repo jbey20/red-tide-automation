@@ -26,29 +26,29 @@ class RedTideProcessor:
         numbers = re.findall(r'[\d,]+', abundance_text)
         
         if 'not present' in abundance_lower or 'background' in abundance_lower:
-            return 500, 'Clear'
+            return 500, 'clear'  # Changed from 'Clear'
         elif 'very low' in abundance_lower:
-            return 2500, 'Clear'
+            return 2500, 'clear'  # Changed from 'Clear'
         elif 'low' in abundance_lower and 'very' not in abundance_lower:
             if len(numbers) >= 2:
                 low = int(numbers[0].replace(',', ''))
                 high = int(numbers[1].replace(',', ''))
-                return (low + high) // 2, 'Low'
-            return 5000, 'Low'
+                return (low + high) // 2, 'low'  # Changed from 'Low'
+            return 5000, 'low'  # Changed from 'Low'
         elif 'medium' in abundance_lower:
             if len(numbers) >= 2:
                 low = int(numbers[0].replace(',', ''))
                 high = int(numbers[1].replace(',', ''))
-                return (low + high) // 2, 'Medium'
-            return 50000, 'Medium'
+                return (low + high) // 2, 'medium'  # Changed from 'Medium'
+            return 50000, 'medium'  # Changed from 'Medium'
         elif 'high' in abundance_lower:
             if len(numbers) >= 2:
                 low = int(numbers[0].replace(',', ''))
                 high = int(numbers[1].replace(',', ''))
-                return (low + high) // 2, 'High'
-            return 500000, 'High'
+                return (low + high) // 2, 'high'  # Changed from 'High'
+            return 500000, 'high'  # Changed from 'High'
         
-        return 0, 'Clear'
+        return 0, 'clear'  # Changed from 'Clear'
     
     def find_beach_data(self, fwc_data, beach_locations):
         """Find most recent abundance data for specific beach"""
@@ -122,13 +122,13 @@ class RedTideProcessor:
         # Overall status based on highest count
         max_count = beach_data['peak_count']
         if max_count >= 100000:
-            overall_status = 'High'
+            overall_status = 'high'
         elif max_count >= 10000:
-            overall_status = 'Medium'
+            overall_status = 'medium'
         elif max_count >= 1000:
-            overall_status = 'Low'
+            overall_status = 'low'
         else:
-            overall_status = 'Clear'
+            overall_status = 'clear'
         
         beach_data['overall_status'] = overall_status
         beach_data['last_updated'] = datetime.now().strftime('%m/%d/%Y %I:%M %p')
