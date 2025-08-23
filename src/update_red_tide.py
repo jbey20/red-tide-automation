@@ -3,7 +3,8 @@ import json
 import os
 import re
 import time
-from datetime import datetime
+from datetime import datetime, timezone
+import pytz
 import gspread
 from google.oauth2.service_account import Credentials
 
@@ -131,7 +132,8 @@ class RedTideProcessor:
             overall_status = 'clear'
         
         beach_data['overall_status'] = overall_status
-        beach_data['last_updated'] = datetime.now().strftime('%m/%d/%Y %I:%M %p')
+        est = pytz.timezone('US/Eastern')
+        beach_data['last_updated'] = datetime.now(est).strftime('%m/%d/%Y %I:%M %p')
         
         return beach_data
     
