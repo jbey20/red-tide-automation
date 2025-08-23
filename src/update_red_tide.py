@@ -83,7 +83,7 @@ class RedTideProcessor:
             }
         
         return {
-            'status': 'No Data',
+            'status': 'clear',  # Changed from 'No Data' 
             'count': 0,
             'raw_abundance': 'No recent samples',
             'location': None,
