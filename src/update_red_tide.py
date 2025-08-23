@@ -157,10 +157,18 @@ class RedTideProcessor:
         auth = (self.wp_username, self.wp_password)
         headers = {'Content-Type': 'application/json'}
         
+        # Debug: Print the request details
+        print(f"  URL: {wp_api_url}")
+        print(f"  Data: {acf_data}")
+        
         response = requests.post(wp_api_url, 
-                               json={'acf': acf_data},
-                               auth=auth, 
-                               headers=headers)
+                            json={'acf': acf_data},
+                            auth=auth, 
+                            headers=headers)
+        
+        # Debug: Print the response
+        print(f"  Response: {response.status_code}")
+        print(f"  Response text: {response.text}")
         
         return response.status_code in [200, 201]
     
