@@ -165,69 +165,69 @@ class RedTideProcessor:
         return response.status_code in [200, 201]
     
     def save_to_google_sheets(self, fwc_data, processed_data):
-    """Save data to Google Sheets with rate limiting"""
-    try:
-        scope = ['https://spreadsheets.google.com/feeds',
-                'https://www.googleapis.com/auth/drive']
-        
-        creds_dict = json.loads(os.environ['GOOGLE_SERVICE_ACCOUNT'])
-        creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
-        client = gspread.authorize(creds)
-        
-        sheet = client.open_by_key(os.environ['GOOGLE_SHEET_ID'])
-        today = datetime.now().strftime('%Y-%m-%d')
-        
-        # Batch beach_status updates (limit: 10 per batch)
-        status_worksheet = sheet.worksheet('beach_status')
-        status_rows = []
-        
-        for page_key, data in processed_data.items():
-            for i in range(1, 5):
-                beach_name = data.get(f'beach_{i}_name', '')
-                if beach_name:
-                    row = [
-                        beach_name, today, page_key,
-                        data.get(f'beach_{i}_status', ''),
-                        data.get(f'beach_{i}_count', 0),
-                        data.get('overall_status', ''),
-                        data.get('peak_count', 0),
-                        data.get('last_updated', '')
-                    ]
-                    status_rows.append(row)
-        
-        # Write in batches of 10
-        for i in range(0, len(status_rows), 10):
-            batch = status_rows[i:i+10]
-            for row in batch:
-                status_worksheet.append_row(row)
-                time.sleep(1.5)  # 1.5 second delay = 40 requests/minute
-        
-        # Daily trends (batch similarly)
-        trends_worksheet = sheet.worksheet('daily_trends')
-        trends_rows = []
-        
-        for page_key, data in processed_data.items():
-            for i in range(1, 5):
-                beach_name = data.get(f'beach_{i}_name', '')
-                if beach_name:
-                    row = [
-                        today, page_key, beach_name,
-                        data.get(f'beach_{i}_count', 0),
-                        data.get(f'beach_{i}_status', ''),
-                        '', '', ''  # location, lat, lng placeholders
-                    ]
-                    trends_rows.append(row)
-        
-        for row in trends_rows:
-            trends_worksheet.append_row(row)
-            time.sleep(1.5)
-        
-        # Skip raw_data for now (197 rows would exceed limits)
-        print("Raw FWC data skipped due to rate limits")
-                
-    except Exception as e:
-        print(f"Google Sheets error: {e}")
+        """Save data to Google Sheets with rate limiting"""
+        try:
+            scope = ['https://spreadsheets.google.com/feeds',
+                    'https://www.googleapis.com/auth/drive']
+            
+            creds_dict = json.loads(os.environ['GOOGLE_SERVICE_ACCOUNT'])
+            creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
+            client = gspread.authorize(creds)
+            
+            sheet = client.open_by_key(os.environ['GOOGLE_SHEET_ID'])
+            today = datetime.now().strftime('%Y-%m-%d')
+            
+            # Batch beach_status updates (limit: 10 per batch)
+            status_worksheet = sheet.worksheet('beach_status')
+            status_rows = []
+            
+            for page_key, data in processed_data.items():
+                for i in range(1, 5):
+                    beach_name = data.get(f'beach_{i}_name', '')
+                    if beach_name:
+                        row = [
+                            beach_name, today, page_key,
+                            data.get(f'beach_{i}_status', ''),
+                            data.get(f'beach_{i}_count', 0),
+                            data.get('overall_status', ''),
+                            data.get('peak_count', 0),
+                            data.get('last_updated', '')
+                        ]
+                        status_rows.append(row)
+            
+            # Write in batches of 10
+            for i in range(0, len(status_rows), 10):
+                batch = status_rows[i:i+10]
+                for row in batch:
+                    status_worksheet.append_row(row)
+                    time.sleep(1.5)  # 1.5 second delay = 40 requests/minute
+            
+            # Daily trends (batch similarly)
+            trends_worksheet = sheet.worksheet('daily_trends')
+            trends_rows = []
+            
+            for page_key, data in processed_data.items():
+                for i in range(1, 5):
+                    beach_name = data.get(f'beach_{i}_name', '')
+                    if beach_name:
+                        row = [
+                            today, page_key, beach_name,
+                            data.get(f'beach_{i}_count', 0),
+                            data.get(f'beach_{i}_status', ''),
+                            '', '', ''  # location, lat, lng placeholders
+                        ]
+                        trends_rows.append(row)
+            
+            for row in trends_rows:
+                trends_worksheet.append_row(row)
+                time.sleep(1.5)
+            
+            # Skip raw_data for now (197 rows would exceed limits)
+            print("Raw FWC data skipped due to rate limits")
                     
+        except Exception as e:
+            print(f"Google Sheets error: {e}")
+                        
     
     def fetch_fwc_data(self):
         """Fetch latest data from FWC API"""
