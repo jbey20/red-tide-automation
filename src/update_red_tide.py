@@ -3,6 +3,7 @@ import json
 import os
 import re
 import time
+import base64
 from datetime import datetime, timezone
 import pytz
 import gspread
@@ -14,7 +15,13 @@ class HierarchicalRedTideProcessor:
         from config.settings import RedTideSettings
         self.wp_site_url = RedTideSettings.WORDPRESS_SITE_URL
         self.wp_username = RedTideSettings.WORDPRESS_USERNAME 
-        self.wp_password = RedTideSettings.WORDPRESS_APP_PASSWORD
+        
+        # Try to decode base64 password, fallback to plain text if it fails
+        try:
+            self.wp_password = base64.b64decode(RedTideSettings.WORDPRESS_APP_PASSWORD).decode()
+        except (UnicodeDecodeError, ValueError):
+            # If base64 decode fails, use the password as-is
+            self.wp_password = RedTideSettings.WORDPRESS_APP_PASSWORD
         
         # Initialize Google Sheets
         self._init_google_sheets()
@@ -32,13 +39,15 @@ class HierarchicalRedTideProcessor:
     
     def _init_google_sheets(self):
         """Initialize Google Sheets client"""
+        from config.settings import RedTideSettings
+        
         scope = ['https://spreadsheets.google.com/feeds',
                 'https://www.googleapis.com/auth/drive']
         
-        creds_dict = json.loads(os.environ['GOOGLE_SERVICE_ACCOUNT'])
+        creds_dict = json.loads(RedTideSettings.GOOGLE_SERVICE_ACCOUNT)
         creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
         self.sheets_client = gspread.authorize(creds)
-        self.sheet = self.sheets_client.open_by_key(os.environ['GOOGLE_SHEET_ID'])
+        self.sheet = self.sheets_client.open_by_key(RedTideSettings.GOOGLE_SHEET_ID)
     
     def _load_locations(self):
         """Load beach locations from Google Sheets"""
@@ -450,9 +459,21 @@ class HierarchicalRedTideProcessor:
         auth = (self.wp_username, self.wp_password)
         search_response = requests.get(search_url, params=search_params, auth=auth)
         
-        if search_response.status_code == 200 and search_response.json():
+        # Handle mixed content response
+        search_results = []
+        if search_response.status_code == 200:
+            try:
+                response_text = search_response.text
+                json_start = response_text.find('[')
+                if json_start != -1:
+                    json_content = response_text[json_start:]
+                    search_results = json.loads(json_content)
+            except Exception as e:
+                print(f"  Warning: Could not parse search response: {e}")
+        
+        if search_results:
             # Update existing post
-            post_id = search_response.json()[0]['id']
+            post_id = search_results[0]['id']
             update_url = f"{self.wp_site_url}/wp-json/wp/v2/red_tide_location/{post_id}"
             method = 'POST'
             print(f"  Updating existing {location_type}: {location_name}")
@@ -491,7 +512,7 @@ class HierarchicalRedTideProcessor:
                 'coordinates': f"{location_data['latitude']}, {location_data['longitude']}" if location_data['latitude'] else '',
                 'full_address': location_data['address'],
                 'state': location_data['state'],
-                'zip_code': location_data['zip_code'],
+                'zip_code': str(location_data['zip_code']) if location_data['zip_code'] else '',
                 'peak_count': location_data['peak_count'],
                 'confidence_score': location_data['confidence_score'],
                 'sample_date': location_data['sample_date'],
@@ -534,13 +555,25 @@ class HierarchicalRedTideProcessor:
                                   json=payload, auth=auth, headers=headers)
         
         if response.status_code in [200, 201]:
-            post_data = response.json()
-            post_id = post_data['id']
-            print(f"  WordPress success: {location_type} '{location_name}' (ID: {post_id})")
-            
-            # Store post ID for parent relationships
-            self.wp_posts[location_type][location_name] = post_id
-            return post_id
+            try:
+                # Handle mixed content response
+                response_text = response.text
+                json_start = response_text.find('{')
+                if json_start != -1:
+                    json_content = response_text[json_start:]
+                    post_data = json.loads(json_content)
+                    post_id = post_data['id']
+                    print(f"  WordPress success: {location_type} '{location_name}' (ID: {post_id})")
+                    
+                    # Store post ID for parent relationships
+                    self.wp_posts[location_type][location_name] = post_id
+                    return post_id
+                else:
+                    print(f"  WordPress success but no JSON in response: {location_type} '{location_name}'")
+                    return None
+            except Exception as e:
+                print(f"  WordPress success but JSON parsing failed: {e}")
+                return None
         else:
             print(f"  WordPress failed: {response.status_code} - {response.text}")
             return None
@@ -618,11 +651,27 @@ class HierarchicalRedTideProcessor:
         auth = (self.wp_username, self.wp_password)
         test_response = requests.get(test_url, auth=auth)
         
+        print(f"Auth test status: {test_response.status_code}")
+        print(f"Auth test response: {test_response.text[:200]}")
+        
         if test_response.status_code != 200:
             print(f"WordPress auth failed: {test_response.text}")
             return
         else:
-            print(f"Authenticated as: {test_response.json().get('name')}")
+            try:
+                # Try to find JSON in the response (handle mixed content)
+                response_text = test_response.text
+                json_start = response_text.find('{')
+                if json_start != -1:
+                    json_content = response_text[json_start:]
+                    user_data = json.loads(json_content)
+                    print(f"Authenticated as: {user_data.get('name')}")
+                else:
+                    print("Authentication successful but no JSON found in response")
+            except Exception as e:
+                print(f"Error parsing auth response: {e}")
+                print("Authentication appears successful (status 200) but response parsing failed")
+                # Continue anyway since auth seems to work
         
         # Fetch FWC data
         fwc_data = self.fetch_fwc_data()
