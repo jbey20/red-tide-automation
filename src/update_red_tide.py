@@ -11,9 +11,10 @@ from google.oauth2.service_account import Credentials
 class HierarchicalRedTideProcessor:
     def __init__(self):
         self.fwc_api_url = "https://atoll.floridamarine.org/arcgis/rest/services/FWC_GIS/OpenData_HAB/MapServer/9/query"
-        self.wp_site_url = os.environ['WORDPRESS_SITE_URL']
-        self.wp_username = os.environ['WORDPRESS_USERNAME'] 
-        self.wp_password = os.environ['WORDPRESS_APP_PASSWORD']
+        from config.settings import RedTideSettings
+        self.wp_site_url = RedTideSettings.WORDPRESS_SITE_URL
+        self.wp_username = RedTideSettings.WORDPRESS_USERNAME 
+        self.wp_password = RedTideSettings.WORDPRESS_APP_PASSWORD
         
         # Initialize Google Sheets
         self._init_google_sheets()
