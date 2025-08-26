@@ -40,4 +40,4 @@ jobs:
         GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
         TEST_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.test_mode && 'true' || 'false' }}
       run: |
-        python src/update_red_tide.py
+        python -m src.update_red_tide
