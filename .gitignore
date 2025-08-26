@@ -1,5 +1,3 @@
-*.json, .env
-.env
-
-git.env
+# Ignore JSON data files and local env files
+*.json
 .env
